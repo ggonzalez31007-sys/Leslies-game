@@ -2,75 +2,174 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Hello Leslie Valentine Game</title>
+  <title>Hello Leslie 💖</title>
+
   <style>
     body {
       margin: 0;
-      background: pink;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      overflow: hidden;
+      background: #ffc0cb;
       font-family: sans-serif;
     }
+
     canvas {
+      display: block;
+      margin: 0 auto;
+      background: #ffc0cb;
       border: 4px solid white;
-      background: #ffb6c1;
+    }
+
+    /* START SCREEN */
+    #startScreen {
+      position: absolute;
+      inset: 0;
+      background: #ffc0cb;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    #startScreen h1 {
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    #startBtn {
+      padding: 12px 24px;
+      font-size: 18px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    /* HEART UI */
+    #hearts {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 24px;
     }
   </style>
 </head>
+
 <body>
+  <!-- START SCREEN -->
+  <div id="startScreen">
+    <h1>Reunite with your boyfriend! 💖</h1>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <!-- HEARTS -->
+  <div id="hearts">❤️ ❤️ ❤️</div>
+
+  <!-- GAME CANVAS -->
   <canvas id="game" width="800" height="400"></canvas>
 
   <script>
+    // ===== SETUP =====
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
 
-    let player = {
+    let gameStarted = false;
+
+    // ===== PLAYER =====
+    const player = {
       x: 100,
       y: 300,
       w: 32,
       h: 32,
       vx: 0,
       vy: 0,
-      speed: 2,
-      jumpPower: 7,
-      grounded: false
+      speed: 3,
+      jumpPower: 6,
+      onGround: false,
+      hearts: 3
     };
 
+    // ===== INPUT =====
     const keys = {};
 
     window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
     window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-    function update() {
-      // movement
-      let moveSpeed = keys["shift"] ? 4 : 2;
-      player.vx = 0;
-      if (keys["a"]) player.vx = -moveSpeed;
-      if (keys["d"]) player.vx = moveSpeed;
+    // ===== START BUTTON =====
+    document.getElementById("startBtn").onclick = () => {
+      document.getElementById("startScreen").style.display = "none";
+      gameStarted = true;
+      gameLoop();
+    };
 
-      // jump
-      if (keys[" "] && player.grounded) {
+    // ===== PHYSICS =====
+    const gravity = 0.3;
+    const groundY = 340;
+
+    function updatePlayer() {
+      // horizontal movement
+      let moveSpeed = player.speed;
+      if (keys["shift"]) moveSpeed = 5;
+
+      if (keys["a"]) player.vx = -moveSpeed;
+      else if (keys["d"]) player.vx = moveSpeed;
+      else player.vx = 0;
+
+      // jumping (hold = higher)
+      if (keys[" "] && player.onGround) {
         player.vy = -player.jumpPower;
-        player.grounded = false;
+        player.onGround = false;
       }
 
       // gravity
-      player.vy += 0.3;
+      player.vy += gravity;
 
+      // apply movement
       player.x += player.vx;
       player.y += player.vy;
 
-      // ground
-      if (player.y + player.h >= 350) {
-        player.y = 350 - player.h;
+      // ground collision
+      if (player.y + player.h >= groundY) {
+        player.y = groundY - player.h;
         player.vy = 0;
-        player.grounded = true;
+        player.onGround = true;
       }
     }
 
-    function draw() {
+    // ===== DRAW =====
+    function drawPlayer() {
+      ctx.fillStyle = "white";
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+      ctx.fillStyle = "black";
+      ctx.fillText("Hello Leslie", player.x - 5, player.y - 5);
+    }
+
+    function drawGround() {
+      ctx.fillStyle = "#ffb6c1";
+      ctx.fillRect(0, groundY, canvas.width, 60);
+    }
+
+    // ===== HEART UI =====
+    function updateHearts() {
+      const heartsDiv = document.getElementById("hearts");
+      heartsDiv.innerHTML = "";
+      for (let i = 0; i < 3; i++) {
+        heartsDiv.innerHTML += i < player.hearts ? "❤️ " : "💔 ";
+      }
+    }
+
+    // ===== GAME LOOP =====
+    function gameLoop() {
+      if (!gameStarted) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // gr
+      updatePlayer();
+      drawGround();
+      drawPlayer();
+      updateHearts();
+
+      requestAnimationFrame(gameLoop);
+    }
+  </script>
+</body>
+</html>
